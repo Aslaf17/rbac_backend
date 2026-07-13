@@ -1,0 +1,97 @@
+package com.rbac.service;
+
+import com.rbac.dto.MarkAttendanceRequest;
+import com.rbac.dto.UpdateAttendanceRequest;
+import com.rbac.model.Attendance;
+import com.rbac.model.AttendanceStatus;
+import com.rbac.repository.AttendanceRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class AttendanceService {
+
+    private final AttendanceRepository attendanceRepository;
+
+    /**
+     * Marks attendance for a user in a session. A user can only be marked once
+     * per session - this is enforced both here (fast, friendly error) and at
+     * the database level via a unique compound index (authoritative, race-safe).
+     */
+    public Attendance markAttendance(MarkAttendanceRequest request) {
+        if (attendanceRepository.existsBySessionIdAndUserId(request.getSessionId(), request.getUserId())) {
+            throw new IllegalArgumentException(
+                    "Attendance is already recorded for this user in this session");
+        }
+
+        Instant joinTime = request.getJoinTime() != null ? request.getJoinTime() : Instant.now();
+        Instant leaveTime = request.getLeaveTime();
+
+        Attendance attendance = new Attendance();
+        attendance.setUserId(request.getUserId());
+        attendance.setSessionId(request.getSessionId());
+        attendance.setJoinTime(joinTime);
+        attendance.setLeaveTime(leaveTime);
+        attendance.setDurationSeconds(calculateDurationSeconds(joinTime, leaveTime));
+        attendance.setStatus(request.getStatus() != null ? request.getStatus() : AttendanceStatus.PRESENT);
+        attendance.setCreatedAt(Instant.now());
+        attendance.setUpdatedAt(Instant.now());
+
+        try {
+            return attendanceRepository.save(attendance);
+        } catch (DuplicateKeyException ex) {
+            // Guards against a race between the existsBy check above and the save
+            throw new IllegalArgumentException(
+                    "Attendance is already recorded for this user in this session");
+        }
+    }
+
+    public List<Attendance> getBySession(String sessionId) {
+        return attendanceRepository.findBySessionId(sessionId);
+    }
+
+    public List<Attendance> getByStudent(String studentId) {
+        return attendanceRepository.findByUserId(studentId);
+    }
+
+    /**
+     * Updates an existing attendance record - typically used to record a
+     * leaveTime (e.g. when a student leaves a session) and recalculate duration,
+     * or to correct a record's status after the fact.
+     */
+    public Attendance updateAttendance(UpdateAttendanceRequest request) {
+        Attendance attendance = attendanceRepository.findById(request.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No attendance record found with id: " + request.getId()));
+
+        if (request.getJoinTime() != null) {
+            attendance.setJoinTime(request.getJoinTime());
+        }
+        if (request.getLeaveTime() != null) {
+            attendance.setLeaveTime(request.getLeaveTime());
+        }
+        if (request.getStatus() != null) {
+            attendance.setStatus(request.getStatus());
+        }
+
+        attendance.setDurationSeconds(
+                calculateDurationSeconds(attendance.getJoinTime(), attendance.getLeaveTime()));
+        attendance.setUpdatedAt(Instant.now());
+
+        return attendanceRepository.save(attendance);
+    }
+
+    private Long calculateDurationSeconds(Instant joinTime, Instant leaveTime) {
+        if (joinTime == null || leaveTime == null) {
+            return null;
+        }
+        long seconds = Duration.between(joinTime, leaveTime).getSeconds();
+        return Math.max(seconds, 0L);
+    }
+}
