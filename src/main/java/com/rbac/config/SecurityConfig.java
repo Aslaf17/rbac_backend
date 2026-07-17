@@ -13,6 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+<<<<<<< HEAD
+=======
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+>>>>>>> origin/whiteboard
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -30,6 +34,10 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+<<<<<<< HEAD
+=======
+@EnableMethodSecurity
+>>>>>>> origin/whiteboard
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -42,6 +50,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+<<<<<<< HEAD
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -78,6 +87,48 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+=======
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Public
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        .requestMatchers("/api/user/**").authenticated()
+
+                        .requestMatchers("/api/student/**").hasAnyRole("STUDENT", "ADMIN")
+                        .requestMatchers("/api/teacher/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/employer/**").hasAnyRole("EMPLOYER", "ADMIN")
+                        .requestMatchers("/api/employee/**").hasAnyRole("EMPLOYEE", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/attendance/mark").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/attendance/update").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/attendance/session/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/attendance/student/**").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/session/start").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/session/*/end").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/session/*/join").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/session/**").authenticated()
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/chat/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/chat/**").authenticated()
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/whiteboard/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/whiteboard/**").authenticated()
+
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(handler -> handler
+                        .authenticationEntryPoint(authenticationEntryPoint())
+                        .accessDeniedHandler(accessDeniedHandler())
+                )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+>>>>>>> origin/whiteboard
 
         return http.build();
     }
@@ -93,11 +144,14 @@ public class SecurityConfig {
         };
     }
 
+<<<<<<< HEAD
     /**
      * Returns a clean JSON 403 when a valid, authenticated user's role doesn't
      * satisfy the endpoint's required authority - this is what the frontend
      * "Access Denied" page reacts to.
      */
+=======
+>>>>>>> origin/whiteboard
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         ObjectMapper mapper = new ObjectMapper();
@@ -139,4 +193,8 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/whiteboard
