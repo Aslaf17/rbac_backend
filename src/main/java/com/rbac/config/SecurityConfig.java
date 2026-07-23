@@ -76,6 +76,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/whiteboard/**").hasAnyRole("TEACHER", "ADMIN")
                         .requestMatchers("/api/whiteboard/**").authenticated()
 
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/session/*/lock", "/api/session/*/unlock").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/session/*/participants/**").authenticated()
+                        .requestMatchers("/api/session/*/hand/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/session/*/media/mic", "/api/session/*/media/camera").authenticated()
+                        .requestMatchers("/api/session/*/media/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/session/*/permissions/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/session/*/waiting-room/**").hasAnyRole("TEACHER", "ADMIN")
+                        .requestMatchers("/api/session/*/logs/**").hasAnyRole("TEACHER", "ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handler -> handler

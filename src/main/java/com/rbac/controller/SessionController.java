@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/session")
 @RequiredArgsConstructor
@@ -25,9 +27,6 @@ public class SessionController {
     public ResponseEntity<SessionResponse> startSession(@Valid @RequestBody StartSessionRequest request) {
         AuthenticatedUser trainer = currentUserProvider.getCurrentUser();
 
-        // Only ADMIN and TEACHER may create a session.
-        // AuthenticatedUser already exposes this check (roles contains
-        // ROLE_TEACHER or ROLE_ADMIN), so we just reuse it.
         if (!trainer.isTrainerOrAdmin()) {
             throw new AccessDeniedException("Only ADMIN or TEACHER can start a session");
         }
@@ -52,5 +51,20 @@ public class SessionController {
         AuthenticatedUser user = currentUserProvider.getCurrentUser();
         AttendanceResponse response = sessionService.joinSession(sessionId, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/{sessionId}/lock")
+    public ResponseEntity<SessionResponse> lockSession(@PathVariable String sessionId) {
+        return ResponseEntity.ok(sessionService.lockSession(sessionId, currentUserProvider.getCurrentUser()));
+    }
+
+    @PutMapping("/{sessionId}/unlock")
+    public ResponseEntity<SessionResponse> unlockSession(@PathVariable String sessionId) {
+        return ResponseEntity.ok(sessionService.unlockSession(sessionId, currentUserProvider.getCurrentUser()));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<SessionResponse>> getAllSessions() {
+        return ResponseEntity.ok(sessionService.getAllSessions());
     }
 }

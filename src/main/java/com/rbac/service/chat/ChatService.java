@@ -35,6 +35,7 @@ class ChatServiceImpl implements ChatService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final SessionValidationService sessionValidationService;
+    private final com.rbac.service.classroom.ClassroomNotificationService notificationService;
 
     @Override
     public ChatMessageResponse sendMessage(SendMessageRequest request, AuthenticatedUser sender) {
@@ -54,7 +55,10 @@ class ChatServiceImpl implements ChatService {
         ChatMessage saved = chatMessageRepository.save(chatMessage);
         log.info("Chat message {} saved for session {} by user {}", saved.getId(), saved.getSessionId(), sender.getUserId());
 
-        return ChatMessageResponse.fromEntity(saved);
+        ChatMessageResponse response = ChatMessageResponse.fromEntity(saved);
+        notificationService.broadcast(request.getSessionId(), "CHAT_MESSAGE", response);
+
+        return response;
     }
 
     @Override

@@ -19,6 +19,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface SessionService {
@@ -30,6 +31,12 @@ public interface SessionService {
     SessionResponse getSession(String sessionId);
 
     AttendanceResponse joinSession(String sessionId, AuthenticatedUser user);
+
+    SessionResponse lockSession(String sessionId, AuthenticatedUser requester);
+
+    SessionResponse unlockSession(String sessionId, AuthenticatedUser requester);
+
+    List<SessionResponse> getAllSessions();
 }
 
 @Slf4j
@@ -39,7 +46,12 @@ class SessionServiceImpl implements SessionService {
 
     private final SessionRepository sessionRepository;
     private final AttendanceRepository attendanceRepository;
+    private final com.rbac.repository.UserRepository userRepository;
+    private final com.rbac.service.classroom.EmailNotificationService emailNotificationService;
+    private final com.rbac.service.classroom.ActivityLogService activityLogService;
+    private final com.rbac.service.classroom.ClassroomNotificationService notificationService;
 
+    // REPLACE the existing startSession method body with:
     @Override
     public SessionResponse startSession(StartSessionRequest request, AuthenticatedUser trainer) {
         Session session = new Session();
@@ -48,9 +60,19 @@ class SessionServiceImpl implements SessionService {
         session.setTrainerName(trainer.getUserName());
         session.setStatus(SessionStatus.LIVE);
         session.setStartedAt(Instant.now());
+        session.setLocked(false);
 
         Session saved = sessionRepository.save(session);
         log.info("Session {} started by {}", saved.getId(), trainer.getUserId());
+
+        activityLogService.record(saved.getId(), trainer.getUserId(), trainer.getUserName(),
+                com.rbac.model.classroom.ActivityType.SESSION_STARTED, "Session started");
+        notificationService.broadcast(saved.getId(), "SESSION_STARTED", SessionResponse.fromEntity(saved));
+
+        // Email every student that the session has started
+        java.util.List<com.rbac.model.login.User> students =
+                userRepository.findByRole(com.rbac.model.login.Role.STUDENT);
+        emailNotificationService.notifySessionStarted(saved, students);
 
         return SessionResponse.fromEntity(saved);
     }
@@ -132,5 +154,55 @@ class SessionServiceImpl implements SessionService {
         response.setDurationSeconds(attendance.getDurationSeconds());
         response.setStatus(attendance.getStatus());
         return response;
+    }
+
+    // ADD inside SessionServiceImpl:
+    @Override
+    public SessionResponse lockSession(String sessionId, AuthenticatedUser requester) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found: " + sessionId));
+
+        boolean isOwner = session.getTrainerId().equals(requester.getUserId());
+        boolean isAdmin = requester.getRoles() != null && requester.getRoles().contains("ROLE_ADMIN");
+        if (!isOwner && !isAdmin) {
+            throw new UnauthorizedActionException("Only the session's trainer or an admin can lock it");
+        }
+
+        session.setLocked(true);
+        Session saved = sessionRepository.save(session);
+
+        activityLogService.record(sessionId, requester.getUserId(), requester.getUserName(),
+                com.rbac.model.classroom.ActivityType.SESSION_LOCKED, "Session locked");
+        notificationService.broadcast(sessionId, "SESSION_LOCKED", SessionResponse.fromEntity(saved));
+
+        return SessionResponse.fromEntity(saved);
+    }
+
+    @Override
+    public SessionResponse unlockSession(String sessionId, AuthenticatedUser requester) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found: " + sessionId));
+
+        boolean isOwner = session.getTrainerId().equals(requester.getUserId());
+        boolean isAdmin = requester.getRoles() != null && requester.getRoles().contains("ROLE_ADMIN");
+        if (!isOwner && !isAdmin) {
+            throw new UnauthorizedActionException("Only the session's trainer or an admin can unlock it");
+        }
+
+        session.setLocked(false);
+        Session saved = sessionRepository.save(session);
+
+        activityLogService.record(sessionId, requester.getUserId(), requester.getUserName(),
+                com.rbac.model.classroom.ActivityType.SESSION_UNLOCKED, "Session unlocked");
+        notificationService.broadcast(sessionId, "SESSION_UNLOCKED", SessionResponse.fromEntity(saved));
+
+        return SessionResponse.fromEntity(saved);
+    }
+
+    @Override
+    public List<SessionResponse> getAllSessions() {
+        return sessionRepository.findAll().stream()
+                .map(SessionResponse::fromEntity)
+                .toList();
     }
 }
