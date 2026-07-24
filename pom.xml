@@ -87,6 +87,13 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.livekit</groupId>
+            <artifactId>livekit-server</artifactId>
+            <version>0.13.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
