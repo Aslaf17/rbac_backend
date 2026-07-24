@@ -1,6 +1,6 @@
 package com.rbac.security;
 
-import com.rbac.model.login.User;
+import com.rbac.model.User;
 import com.rbac.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

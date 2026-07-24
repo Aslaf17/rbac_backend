@@ -13,7 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+<<<<<<< HEAD
+=======
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+>>>>>>> origin/whiteboard
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -31,7 +34,10 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+<<<<<<< HEAD
+=======
 @EnableMethodSecurity
+>>>>>>> origin/whiteboard
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -44,6 +50,44 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+<<<<<<< HEAD
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // Public
+                .requestMatchers("/api/auth/**").permitAll()
+
+                // Any authenticated user, regardless of role
+                .requestMatchers("/api/user/**").authenticated()
+
+                // Role-protected endpoints - each role's own dashboard, plus ADMIN
+                // is granted access everywhere since it's the superuser role.
+                .requestMatchers("/api/student/**").hasAnyRole("STUDENT", "ADMIN")
+                .requestMatchers("/api/teacher/**").hasAnyRole("TEACHER", "ADMIN")
+                .requestMatchers("/api/employer/**").hasAnyRole("EMPLOYER", "ADMIN")
+                .requestMatchers("/api/employee/**").hasAnyRole("EMPLOYEE", "ADMIN")
+
+                // Attendance - students can mark/view their own attendance as they
+                // join/leave a session; teachers and admins can mark on behalf of
+                // others, view a full session roster, and correct records.
+                .requestMatchers(HttpMethod.POST, "/api/attendance/mark").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/attendance/update").hasAnyRole("TEACHER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/attendance/session/**").hasAnyRole("TEACHER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/attendance/student/**").hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+
+                // Admin-only
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                .anyRequest().authenticated()
+            )
+            .exceptionHandling(handler -> handler
+                .authenticationEntryPoint(authenticationEntryPoint())
+                .accessDeniedHandler(accessDeniedHandler())
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+=======
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -94,6 +138,7 @@ public class SecurityConfig {
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+>>>>>>> origin/whiteboard
 
         return http.build();
     }
@@ -109,6 +154,14 @@ public class SecurityConfig {
         };
     }
 
+<<<<<<< HEAD
+    /**
+     * Returns a clean JSON 403 when a valid, authenticated user's role doesn't
+     * satisfy the endpoint's required authority - this is what the frontend
+     * "Access Denied" page reacts to.
+     */
+=======
+>>>>>>> origin/whiteboard
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         ObjectMapper mapper = new ObjectMapper();
@@ -150,4 +203,8 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/whiteboard

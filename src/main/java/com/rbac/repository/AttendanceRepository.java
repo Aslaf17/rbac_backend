@@ -1,6 +1,6 @@
 package com.rbac.repository;
 
-import com.rbac.model.attendance.Attendance;
+import com.rbac.model.Attendance;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
@@ -15,7 +15,4 @@ public interface AttendanceRepository extends MongoRepository<Attendance, String
     Optional<Attendance> findBySessionIdAndUserId(String sessionId, String userId);
 
     boolean existsBySessionIdAndUserId(String sessionId, String userId);
-
-    Optional<Attendance> findBySessionIdAndUserIdAndLeaveTimeIsNull(String sessionId, String userId);
-
 }

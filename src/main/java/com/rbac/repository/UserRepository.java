@@ -1,6 +1,6 @@
 package com.rbac.repository;
 
-import com.rbac.model.login.User;
+import com.rbac.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;

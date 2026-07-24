@@ -7,7 +7,6 @@ import org.springframework.data.mongodb.config.EnableMongoAuditing;
 @org.springframework.scheduling.annotation.Async
 
 @SpringBootApplication
-@EnableMongoAuditing
 public class RbacBackendApplication {
 
     public static void main(String[] args) {

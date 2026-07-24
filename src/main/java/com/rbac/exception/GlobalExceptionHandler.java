@@ -8,9 +8,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import com.rbac.exception.chat.ResourceNotFoundException;
-import com.rbac.exception.chat.InvalidRequestException;
-import com.rbac.exception.chat.UnauthorizedActionException;
 
 import java.util.stream.Collectors;
 
@@ -45,20 +42,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiError(500, "Something went wrong: " + ex.getMessage()));
-    }
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleResourceNotFound(ResourceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
-    }
-
-    @ExceptionHandler(InvalidRequestException.class)
-    public ResponseEntity<ApiError> handleInvalidRequest(InvalidRequestException ex) {
-        return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
-    }
-
-    @ExceptionHandler(UnauthorizedActionException.class)
-    public ResponseEntity<ApiError> handleUnauthorizedAction(UnauthorizedActionException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
     }
 }

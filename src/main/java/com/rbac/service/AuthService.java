@@ -1,10 +1,10 @@
 package com.rbac.service;
 
-import com.rbac.dto.login.AuthResponse;
-import com.rbac.dto.login.LoginRequest;
-import com.rbac.dto.login.RegisterRequest;
-import com.rbac.model.login.Role;
-import com.rbac.model.login.User;
+import com.rbac.dto.AuthResponse;
+import com.rbac.dto.LoginRequest;
+import com.rbac.dto.RegisterRequest;
+import com.rbac.model.Role;
+import com.rbac.model.User;
 import com.rbac.repository.UserRepository;
 import com.rbac.security.JwtUtil;
 import lombok.RequiredArgsConstructor;

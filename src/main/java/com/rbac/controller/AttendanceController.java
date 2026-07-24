@@ -1,16 +1,14 @@
 package com.rbac.controller;
 
-import com.rbac.dto.attendance.LogoutAttendanceRequest;
-import com.rbac.dto.attendance.MarkAttendanceRequest;
-import com.rbac.dto.attendance.UpdateAttendanceRequest;
-import com.rbac.model.attendance.Attendance;
+import com.rbac.dto.MarkAttendanceRequest;
+import com.rbac.dto.UpdateAttendanceRequest;
+import com.rbac.model.Attendance;
 import com.rbac.service.AttendanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.rbac.dto.attendance.AttendanceResponse;
 
 import java.util.List;
 
@@ -28,23 +26,17 @@ public class AttendanceController {
     }
 
     @GetMapping("/session/{sessionId}")
-    public ResponseEntity<List<AttendanceResponse>> getBySession(@PathVariable String sessionId) {
+    public ResponseEntity<List<Attendance>> getBySession(@PathVariable String sessionId) {
         return ResponseEntity.ok(attendanceService.getBySession(sessionId));
     }
 
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<AttendanceResponse>> getByStudent(@PathVariable String studentId) {
+    public ResponseEntity<List<Attendance>> getByStudent(@PathVariable String studentId) {
         return ResponseEntity.ok(attendanceService.getByStudent(studentId));
     }
 
     @PutMapping("/update")
     public ResponseEntity<Attendance> update(@Valid @RequestBody UpdateAttendanceRequest request) {
         return ResponseEntity.ok(attendanceService.updateAttendance(request));
-    }
-
-    @PutMapping("/logout")
-    public ResponseEntity<Attendance> logout(@Valid @RequestBody LogoutAttendanceRequest request) {
-        Attendance attendance = attendanceService.logoutAttendance(request);
-        return ResponseEntity.ok(attendance);
     }
 }
