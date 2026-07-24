@@ -30,4 +30,6 @@ public class Session {
     private Instant endedAt;
 
     private Instant createdAt = Instant.now();
+
+    private boolean locked = false;
 }
