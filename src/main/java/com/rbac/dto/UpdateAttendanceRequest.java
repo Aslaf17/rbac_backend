@@ -1,6 +1,6 @@
 package com.rbac.dto;
 
-import com.rbac.model.AttendanceStatus;
+import com.rbac.model.attendance.AttendanceStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 

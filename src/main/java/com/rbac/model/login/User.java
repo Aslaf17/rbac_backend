@@ -29,4 +29,7 @@ public class User {
     private Role role;
 
     private Instant createdAt = Instant.now();
+
+    private String batchId;
+
 }

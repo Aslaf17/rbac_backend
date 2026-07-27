@@ -2,8 +2,8 @@ package com.rbac.service;
 
 import com.rbac.dto.MarkAttendanceRequest;
 import com.rbac.dto.UpdateAttendanceRequest;
-import com.rbac.model.Attendance;
-import com.rbac.model.AttendanceStatus;
+import com.rbac.model.attendance.Attendance;
+import com.rbac.model.attendance.AttendanceStatus;
 import com.rbac.repository.AttendanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
@@ -19,11 +19,6 @@ public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
 
-    /**
-     * Marks attendance for a user in a session. A user can only be marked once
-     * per session - this is enforced both here (fast, friendly error) and at
-     * the database level via a unique compound index (authoritative, race-safe).
-     */
     public Attendance markAttendance(MarkAttendanceRequest request) {
         if (attendanceRepository.existsBySessionIdAndUserId(request.getSessionId(), request.getUserId())) {
             throw new IllegalArgumentException(
@@ -60,11 +55,6 @@ public class AttendanceService {
         return attendanceRepository.findByUserId(studentId);
     }
 
-    /**
-     * Updates an existing attendance record - typically used to record a
-     * leaveTime (e.g. when a student leaves a session) and recalculate duration,
-     * or to correct a record's status after the fact.
-     */
     public Attendance updateAttendance(UpdateAttendanceRequest request) {
         Attendance attendance = attendanceRepository.findById(request.getId())
                 .orElseThrow(() -> new IllegalArgumentException(
