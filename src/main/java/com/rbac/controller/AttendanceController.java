@@ -2,7 +2,7 @@ package com.rbac.controller;
 
 import com.rbac.dto.MarkAttendanceRequest;
 import com.rbac.dto.UpdateAttendanceRequest;
-import com.rbac.model.Attendance;
+import com.rbac.model.attendance.Attendance;
 import com.rbac.service.AttendanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

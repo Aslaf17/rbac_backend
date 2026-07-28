@@ -43,4 +43,39 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiError(500, "Something went wrong: " + ex.getMessage()));
     }
+
+    @ExceptionHandler(com.rbac.exception.notification.ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotificationNotFound(com.rbac.exception.notification.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.notification.InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleNotificationInvalidRequest(com.rbac.exception.notification.InvalidRequestException ex) {
+        return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.notification.UnauthorizedActionException.class)
+    public ResponseEntity<ApiError> handleNotificationUnauthorized(com.rbac.exception.notification.UnauthorizedActionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.feedback.ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleFeedbackNotFound(com.rbac.exception.feedback.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.feedback.InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleFeedbackInvalidRequest(com.rbac.exception.feedback.InvalidRequestException ex) {
+        return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.feedback.UnauthorizedActionException.class)
+    public ResponseEntity<ApiError> handleFeedbackUnauthorized(com.rbac.exception.feedback.UnauthorizedActionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.feedback.DuplicateFeedbackException.class)
+    public ResponseEntity<ApiError> handleFeedbackDuplicate(com.rbac.exception.feedback.DuplicateFeedbackException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiError(409, ex.getMessage()));
+    }
 }

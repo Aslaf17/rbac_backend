@@ -1,6 +1,6 @@
 package com.rbac.repository;
 
-import com.rbac.model.Attendance;
+import com.rbac.model.attendance.Attendance;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
