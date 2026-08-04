@@ -8,9 +8,13 @@ import com.rbac.exception.chat.ResourceNotFoundException;
 import com.rbac.exception.chat.UnauthorizedActionException;
 import com.rbac.model.attendance.Attendance;
 import com.rbac.model.attendance.AttendanceStatus;
+import com.rbac.model.batch.Batch;
+import com.rbac.model.batch.BatchStatus;
+import com.rbac.model.login.User;
 import com.rbac.model.session.Session;
 import com.rbac.model.session.SessionStatus;
 import com.rbac.repository.AttendanceRepository;
+import com.rbac.repository.BatchRepository;
 import com.rbac.repository.SessionRepository;
 import com.rbac.security.chat.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +50,7 @@ class SessionServiceImpl implements SessionService {
 
     private final SessionRepository sessionRepository;
     private final AttendanceRepository attendanceRepository;
+    private final BatchRepository batchRepository;
     private final com.rbac.repository.UserRepository userRepository;
     private final com.rbac.service.classroom.EmailNotificationService emailNotificationService;
     private final com.rbac.service.classroom.ActivityLogService activityLogService;
@@ -54,13 +59,24 @@ class SessionServiceImpl implements SessionService {
     // REPLACE the existing startSession method body with:
     @Override
     public SessionResponse startSession(StartSessionRequest request, AuthenticatedUser trainer) {
+        Batch batch = batchRepository.findById(request.getBatchId())
+                .orElseThrow(() -> new ResourceNotFoundException("Batch not found: " + request.getBatchId()));
+        if (batch.getStatus() != BatchStatus.ACTIVE) {
+            throw new InvalidRequestException("Cannot start a classroom for a batch that is not ACTIVE");
+        }
+
         Session session = new Session();
         session.setTitle(request.getTitle());
         session.setTrainerId(trainer.getUserId());
         session.setTrainerName(trainer.getUserName());
+        session.setBatchId(batch.getId());
         session.setStatus(SessionStatus.LIVE);
         session.setStartedAt(Instant.now());
         session.setLocked(false);
+        session.setTrainerConnected(true);
+        if (request.getReconnectTimeoutSeconds() != null && request.getReconnectTimeoutSeconds() > 0) {
+            session.setReconnectTimeoutSeconds(request.getReconnectTimeoutSeconds());
+        }
 
         Session saved = sessionRepository.save(session);
         log.info("Session {} started by {}", saved.getId(), trainer.getUserId());
@@ -69,9 +85,9 @@ class SessionServiceImpl implements SessionService {
                 com.rbac.model.classroom.ActivityType.SESSION_STARTED, "Session started");
         notificationService.broadcast(saved.getId(), "SESSION_STARTED", SessionResponse.fromEntity(saved));
 
-        // Email every student that the session has started
+        // Email only the students belonging to this session's batch — not every student.
         java.util.List<com.rbac.model.login.User> students =
-                userRepository.findByRole(com.rbac.model.login.Role.STUDENT);
+                userRepository.findByBatchIdsContaining(saved.getBatchId());
         emailNotificationService.notifySessionStarted(saved, students);
 
         return SessionResponse.fromEntity(saved);
@@ -114,6 +130,18 @@ class SessionServiceImpl implements SessionService {
 
         if (session.getTrainerId().equals(user.getUserId())) {
             throw new UnauthorizedActionException("Trainer cannot join their own session as an attendee");
+        }
+
+        // Batch-wise classroom access: students may only join classrooms for their own batch.
+        // Trainers/Admins are exempt so they can oversee or co-host any classroom.
+        if (user.hasRole(com.rbac.model.login.Role.STUDENT) && !user.isTrainerOrAdmin()) {
+            User student = userRepository.findById(user.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found: " + user.getUserId()));
+            if (session.getBatchId() == null || student.getBatchIds() == null
+                    || !student.getBatchIds().contains(session.getBatchId())) {
+                throw new UnauthorizedActionException(
+                        "You are not assigned to this classroom's batch and cannot join");
+            }
         }
 
         Optional<Attendance> existing = attendanceRepository

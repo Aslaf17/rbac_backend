@@ -1,4 +1,4 @@
-package com.rbac.controller;
+package com.rbac.controller.classroom;
 
 import com.rbac.dto.feedback.FeedbackListResponse;
 import com.rbac.dto.feedback.FeedbackResponse;

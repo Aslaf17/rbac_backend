@@ -1,7 +1,7 @@
 package com.rbac.service;
 
-import com.rbac.dto.MarkAttendanceRequest;
-import com.rbac.dto.UpdateAttendanceRequest;
+import com.rbac.dto.attendance.MarkAttendanceRequest;
+import com.rbac.dto.attendance.UpdateAttendanceRequest;
 import com.rbac.model.attendance.Attendance;
 import com.rbac.model.attendance.AttendanceStatus;
 import com.rbac.repository.AttendanceRepository;

@@ -1,5 +1,9 @@
 package com.rbac.controller;
 
+import com.rbac.dto.dashboard.AdminDashboardResponse;
+import com.rbac.service.dashboard.DashboardService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,7 +13,10 @@ import java.time.Instant;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 public class DashboardController {
+
+    private final DashboardService dashboardService;
 
     @GetMapping("/api/user/profile")
     public Map<String, Object> profile(Authentication authentication) {
@@ -44,10 +51,10 @@ public class DashboardController {
                 "Payroll, timesheets, and company announcements would appear here.");
     }
 
+    // Secured to ADMIN role only via SecurityConfig ("/api/admin/**" -> hasRole("ADMIN")).
     @GetMapping("/api/admin/dashboard")
-    public Map<String, Object> adminDashboard(Authentication authentication) {
-        return response(authentication, "Admin Dashboard",
-                "User management, role assignment, and system settings would appear here.");
+    public ResponseEntity<AdminDashboardResponse> adminDashboard() {
+        return ResponseEntity.ok(dashboardService.getAdminDashboard());
     }
 
     private Map<String, Object> response(Authentication authentication, String title, String detail) {

@@ -19,5 +19,9 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     List<User> findByRole(Role role);
 
-    java.util.List<com.rbac.model.login.User> findByBatchId(String batchId);
+    java.util.List<com.rbac.model.login.User> findByBatchIdsContaining(String batchId);
+
+    long countByBatchIdsContaining(String batchId);
+
+    java.util.List<com.rbac.model.login.User> findByIdInAndRole(java.util.List<String> ids, Role role);
 }

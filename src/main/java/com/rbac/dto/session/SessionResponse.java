@@ -19,9 +19,14 @@ public class SessionResponse {
     private String title;
     private String trainerId;
     private String trainerName;
+    private String batchId;
     private SessionStatus status;
     private Instant startedAt;
     private Instant endedAt;
+
+    private boolean trainerConnected;
+    private Instant trainerDisconnectedAt;
+    private int reconnectTimeoutSeconds;
 
     public static SessionResponse fromEntity(Session session) {
         return SessionResponse.builder()
@@ -29,9 +34,13 @@ public class SessionResponse {
                 .title(session.getTitle())
                 .trainerId(session.getTrainerId())
                 .trainerName(session.getTrainerName())
+                .batchId(session.getBatchId())
                 .status(session.getStatus())
                 .startedAt(session.getStartedAt())
                 .endedAt(session.getEndedAt())
+                .trainerConnected(session.isTrainerConnected())
+                .trainerDisconnectedAt(session.getTrainerDisconnectedAt())
+                .reconnectTimeoutSeconds(session.getReconnectTimeoutSeconds())
                 .build();
     }
 }

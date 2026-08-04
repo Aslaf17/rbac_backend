@@ -23,6 +23,8 @@ public class Session {
 
     private String trainerName;
 
+    private String batchId;
+
     private SessionStatus status;
 
     private Instant startedAt;
@@ -32,4 +34,11 @@ public class Session {
     private Instant createdAt = Instant.now();
 
     private boolean locked = false;
+
+
+    private boolean trainerConnected = true;
+
+    private Instant trainerDisconnectedAt;
+
+    private int reconnectTimeoutSeconds = 300;
 }

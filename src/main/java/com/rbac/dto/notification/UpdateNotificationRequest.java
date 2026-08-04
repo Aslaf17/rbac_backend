@@ -29,6 +29,8 @@ public class UpdateNotificationRequest {
 
     private String batchId;
 
+    private String sessionId;
+
     @NotNull(message = "priority is required")
     private NotificationPriority priority;
 }

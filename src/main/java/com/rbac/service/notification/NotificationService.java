@@ -9,14 +9,18 @@ import com.rbac.exception.notification.InvalidRequestException;
 import com.rbac.exception.notification.ResourceNotFoundException;
 import com.rbac.exception.notification.UnauthorizedActionException;
 import com.rbac.model.login.User;
-import com.rbac.model.login.Role;
 import com.rbac.model.notification.Notification;
 import com.rbac.model.notification.NotificationPriority;
 import com.rbac.model.notification.NotificationRead;
 import com.rbac.model.notification.NotificationStatus;
 import com.rbac.model.notification.RecipientType;
+import com.rbac.model.classroom.Participant;
+import com.rbac.model.classroom.ParticipantStatus;
+import com.rbac.model.session.Session;
 import com.rbac.repository.NotificationReadRepository;
 import com.rbac.repository.NotificationRepository;
+import com.rbac.repository.ParticipantRepository;
+import com.rbac.repository.SessionRepository;
 import com.rbac.repository.UserRepository;
 import com.rbac.security.chat.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +72,8 @@ class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationReadRepository notificationReadRepository;
     private final UserRepository userRepository;
+    private final SessionRepository sessionRepository;
+    private final ParticipantRepository participantRepository;
     private final MongoTemplate mongoTemplate;
     private final NotificationEmailService notificationEmailService;
     private final NotificationSocketService notificationSocketService;
@@ -77,7 +83,7 @@ class NotificationServiceImpl implements NotificationService {
         if (!sender.isTrainerOrAdmin()) {
             throw new UnauthorizedActionException("Only trainers or admins can create notifications");
         }
-        validateRecipientPayload(request.getRecipientType(), request.getRecipientId(), request.getBatchId());
+        validateRecipientPayload(request.getRecipientType(), request.getRecipientId(), request.getBatchId(), request.getSessionId());
 
         LocalDateTime now = LocalDateTime.now();
         String senderRole = sender.getRoleEnums().stream().findFirst().map(Enum::name).orElse("UNKNOWN");
@@ -91,6 +97,7 @@ class NotificationServiceImpl implements NotificationService {
                 .recipientType(request.getRecipientType())
                 .recipientId(request.getRecipientId())
                 .batchId(request.getBatchId())
+                .sessionId(request.getSessionId())
                 .priority(request.getPriority())
                 .status(NotificationStatus.ACTIVE)
                 .createdAt(now)
@@ -104,7 +111,7 @@ class NotificationServiceImpl implements NotificationService {
 
         List<User> recipients = resolveRecipients(saved);
         notificationEmailService.sendNotificationEmails(saved, recipients);
-        notificationSocketService.push(saved.getRecipientType(), response, recipients);
+        notificationSocketService.push(saved, response, recipients);
 
         return response;
     }
@@ -112,8 +119,16 @@ class NotificationServiceImpl implements NotificationService {
     private List<User> resolveRecipients(Notification notification) {
         return switch (notification.getRecipientType()) {
             case ALL -> userRepository.findAll();
-            case BATCH -> userRepository.findByBatchId(notification.getBatchId());
+            case BATCH -> userRepository.findByBatchIdsContaining(notification.getBatchId());
             case USER -> userRepository.findById(notification.getRecipientId()).map(List::of).orElse(List.of());
+            case LIVE_CLASSROOM -> {
+                List<String> userIds = participantRepository.findBySessionId(notification.getSessionId()).stream()
+                        .filter(p -> p.getStatus() == ParticipantStatus.ACTIVE || p.getStatus() == ParticipantStatus.RECONNECTING)
+                        .map(Participant::getUserId)
+                        .distinct()
+                        .toList();
+                yield userRepository.findAllById(userIds);
+            }
         };
     }
 
@@ -159,13 +174,19 @@ class NotificationServiceImpl implements NotificationService {
         User user = userRepository.findById(requester.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + requester.getUserId()));
 
+        List<String> activeSessionIds = participantRepository.findByUserIdAndStatus(user.getId(), ParticipantStatus.ACTIVE)
+                .stream().map(Participant::getSessionId).distinct().toList();
+
         Query query = new Query();
         Criteria audience = new Criteria().orOperator(
                 Criteria.where("recipientType").is(RecipientType.ALL),
                 Criteria.where("recipientType").is(RecipientType.USER).and("recipientId").is(user.getId()),
-                StringUtils.hasText(user.getBatchId())
-                        ? Criteria.where("recipientType").is(RecipientType.BATCH).and("batchId").is(user.getBatchId())
-                        : Criteria.where("recipientType").is(RecipientType.BATCH).and("batchId").is("__no_batch__")
+                (user.getBatchIds() != null && !user.getBatchIds().isEmpty())
+                        ? Criteria.where("recipientType").is(RecipientType.BATCH).and("batchId").in(user.getBatchIds())
+                        : Criteria.where("recipientType").is(RecipientType.BATCH).and("batchId").is("__no_batch__"),
+                !activeSessionIds.isEmpty()
+                        ? Criteria.where("recipientType").is(RecipientType.LIVE_CLASSROOM).and("sessionId").in(activeSessionIds)
+                        : Criteria.where("recipientType").is(RecipientType.LIVE_CLASSROOM).and("sessionId").is("__no_session__")
         );
         query.addCriteria(audience);
         query.addCriteria(Criteria.where("status").is(NotificationStatus.ACTIVE));
@@ -198,7 +219,7 @@ class NotificationServiceImpl implements NotificationService {
         if (!requester.isTrainerOrAdmin()) {
             throw new UnauthorizedActionException("Only trainers or admins can update notifications");
         }
-        validateRecipientPayload(request.getRecipientType(), request.getRecipientId(), request.getBatchId());
+        validateRecipientPayload(request.getRecipientType(), request.getRecipientId(), request.getBatchId(), request.getSessionId());
 
         Notification notification = findActiveOrThrow(id);
 
@@ -207,6 +228,7 @@ class NotificationServiceImpl implements NotificationService {
         notification.setRecipientType(request.getRecipientType());
         notification.setRecipientId(request.getRecipientId());
         notification.setBatchId(request.getBatchId());
+        notification.setSessionId(request.getSessionId());
         notification.setPriority(request.getPriority());
         notification.setUpdatedAt(LocalDateTime.now());
 
@@ -234,8 +256,8 @@ class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void softDelete(String id, AuthenticatedUser requester) {
-        if (!requester.hasRole(Role.ADMIN)) {
-            throw new UnauthorizedActionException("Only admins can delete notifications");
+        if (!requester.isTrainerOrAdmin()) {
+            throw new UnauthorizedActionException("Only trainers or admins can delete notifications");
         }
         Notification notification = findActiveOrThrow(id);
         notification.setStatus(NotificationStatus.DELETED);
@@ -313,20 +335,43 @@ class NotificationServiceImpl implements NotificationService {
             case ALL -> true;
             case USER -> requester.getUserId().equals(notification.getRecipientId());
             case BATCH -> userRepository.findById(requester.getUserId())
-                    .map(u -> notification.getBatchId() != null && notification.getBatchId().equals(u.getBatchId()))
+                    .map(u -> notification.getBatchId() != null && u.getBatchIds() != null
+                            && u.getBatchIds().contains(notification.getBatchId()))
                     .orElse(false);
+            case LIVE_CLASSROOM -> notification.getSessionId() != null
+                    && !participantRepository.findAllBySessionIdAndUserId(notification.getSessionId(), requester.getUserId()).isEmpty();
         };
         if (!isTargeted) {
             throw new UnauthorizedActionException("You do not have access to this notification");
         }
     }
 
-    private void validateRecipientPayload(RecipientType type, String recipientId, String batchId) {
-        if (type == RecipientType.USER && !StringUtils.hasText(recipientId)) {
-            throw new InvalidRequestException("recipientId is required when recipientType is USER");
+    private void validateRecipientPayload(RecipientType type, String recipientId, String batchId, String sessionId) {
+        if (type == RecipientType.USER) {
+            if (!StringUtils.hasText(recipientId)) {
+                throw new InvalidRequestException("recipientId is required when recipientType is USER");
+            }
+            if (userRepository.findById(recipientId).isEmpty()) {
+                throw new ResourceNotFoundException("User not found: " + recipientId);
+            }
         }
-        if (type == RecipientType.BATCH && !StringUtils.hasText(batchId)) {
-            throw new InvalidRequestException("batchId is required when recipientType is BATCH");
+        if (type == RecipientType.BATCH) {
+            if (!StringUtils.hasText(batchId)) {
+                throw new InvalidRequestException("batchId is required when recipientType is BATCH");
+            }
+            if (userRepository.findByBatchIdsContaining(batchId).isEmpty()) {
+                throw new ResourceNotFoundException("No users found for batchId: " + batchId);
+            }
+        }
+        if (type == RecipientType.LIVE_CLASSROOM) {
+            if (!StringUtils.hasText(sessionId)) {
+                throw new InvalidRequestException("sessionId is required when recipientType is LIVE_CLASSROOM");
+            }
+            Session session = sessionRepository.findById(sessionId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Session not found: " + sessionId));
+            if (session.getStatus() != com.rbac.model.session.SessionStatus.LIVE) {
+                throw new InvalidRequestException("Session " + sessionId + " is not currently live");
+            }
         }
     }
 

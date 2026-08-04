@@ -32,6 +32,10 @@ public interface ParticipantService {
 
     ParticipantResponse markDisconnected(String sessionId, String userId);
 
+    void handleUserDisconnected(String userId, String userName);
+
+    void handleUserReconnecting(String userId, String userName);
+
     ParticipantResponse leave(String sessionId, AuthenticatedUser user);
 
     long getLiveCount(String sessionId);
@@ -139,28 +143,8 @@ class ParticipantServiceImpl implements ParticipantService {
 
     @Override
     public ParticipantResponse rejoin(String sessionId, AuthenticatedUser user) {
-        Participant participant = participantRepository.findBySessionIdAndUserId(sessionId, user.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("You have not previously joined this session"));
 
-        if (participant.getStatus() == ParticipantStatus.REMOVED && !participant.isCanRejoin()) {
-            throw new UnauthorizedActionException("You are not permitted to rejoin this session");
-        }
-
-        Session session = requireLiveSession(sessionId);
-        if (session.isLocked()) {
-            throw new InvalidRequestException("This session is locked and not accepting new participants");
-        }
-
-        participant.setStatus(ParticipantStatus.ACTIVE);
-        participant.setJoinedAt(Instant.now());
-        participant.setUpdatedAt(Instant.now());
-        Participant saved = participantRepository.save(participant);
-
-        activityLogService.record(sessionId, user.getUserId(), user.getUserName(),
-                ActivityType.PARTICIPANT_REJOINED, "Rejoined the session");
-        notificationService.broadcast(sessionId, "PARTICIPANT_REJOINED", ParticipantResponse.fromEntity(saved));
-
-        return ParticipantResponse.fromEntity(saved);
+        return requestJoin(sessionId, user);
     }
 
     @Override
@@ -177,6 +161,43 @@ class ParticipantServiceImpl implements ParticipantService {
         notificationService.broadcast(sessionId, "PARTICIPANT_DISCONNECTED", ParticipantResponse.fromEntity(saved));
 
         return ParticipantResponse.fromEntity(saved);
+    }
+
+    @Override
+    public void handleUserDisconnected(String userId, String userName) {
+        // Their socket dropped (tab closed, crash, network loss...) while they were actually in
+        // the room. Mark every session they're ACTIVE in as DISCONNECTED - they'll need to submit
+        // a fresh join request and be re-approved, same as any other rejoin.
+        List<Participant> active = participantRepository.findByUserIdAndStatus(userId, ParticipantStatus.ACTIVE);
+        for (Participant participant : active) {
+            participant.setStatus(ParticipantStatus.DISCONNECTED);
+            participant.setUpdatedAt(Instant.now());
+            Participant saved = participantRepository.save(participant);
+
+            activityLogService.record(participant.getSessionId(), userId, userName,
+                    ActivityType.DISCONNECTED, userName + "'s connection dropped");
+            notificationService.broadcast(participant.getSessionId(), "PARTICIPANT_DISCONNECTED",
+                    ParticipantResponse.fromEntity(saved));
+        }
+    }
+
+    @Override
+    public void handleUserReconnecting(String userId, String userName) {
+        // Their socket is back, but they are NOT re-admitted automatically - this only flips the
+        // badge trainers see from "Disconnected" to "Reconnecting" and prompts the student to send
+        // a new join request from the client.
+        List<Participant> disconnected = participantRepository.findByUserIdAndStatus(userId, ParticipantStatus.DISCONNECTED);
+        for (Participant participant : disconnected) {
+            participant.setStatus(ParticipantStatus.RECONNECTING);
+            participant.setUpdatedAt(Instant.now());
+            Participant saved = participantRepository.save(participant);
+
+            activityLogService.record(participant.getSessionId(), userId, userName,
+                    ActivityType.RECONNECTING, userName + "'s connection is back - awaiting a new join request");
+            notificationService.broadcast(participant.getSessionId(), "PARTICIPANT_RECONNECTING",
+                    ParticipantResponse.fromEntity(saved));
+            notificationService.notifyUser(userId, "PLEASE_REQUEST_REJOIN", ParticipantResponse.fromEntity(saved));
+        }
     }
 
     @Override

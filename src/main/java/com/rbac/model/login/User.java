@@ -8,6 +8,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -24,12 +26,13 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
-    private String password; 
+    private String password;
 
     private Role role;
 
     private Instant createdAt = Instant.now();
 
-    private String batchId;
+    @Indexed
+    private Set<String> batchIds = new HashSet<>();
 
 }
