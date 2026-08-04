@@ -18,6 +18,8 @@ public interface ParticipantRepository extends MongoRepository<Participant, Stri
 
     List<Participant> findBySessionIdAndStatus(String sessionId, ParticipantStatus status);
 
+    List<Participant> findByUserIdAndStatus(String userId, ParticipantStatus status);
+
     List<Participant> findBySessionIdAndHandStatus(String sessionId, HandStatus handStatus);
 
     long countBySessionIdAndStatus(String sessionId, ParticipantStatus status);

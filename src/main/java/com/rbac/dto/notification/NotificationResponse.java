@@ -26,6 +26,7 @@ public class NotificationResponse {
     private RecipientType recipientType;
     private String recipientId;
     private String batchId;
+    private String sessionId;
     private NotificationPriority priority;
     private NotificationStatus status;
     private boolean read;
@@ -43,6 +44,7 @@ public class NotificationResponse {
                 .recipientType(entity.getRecipientType())
                 .recipientId(entity.getRecipientId())
                 .batchId(entity.getBatchId())
+                .sessionId(entity.getSessionId())
                 .priority(entity.getPriority())
                 .status(entity.getStatus())
                 .read(read)

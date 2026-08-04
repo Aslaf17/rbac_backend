@@ -90,7 +90,7 @@ public class NotificationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         AuthenticatedUser requester = currentUserProvider.getCurrentUser();
         notificationService.softDelete(id, requester);
