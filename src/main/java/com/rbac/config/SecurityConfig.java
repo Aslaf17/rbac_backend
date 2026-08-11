@@ -136,6 +136,38 @@ public class SecurityConfig {
                         .requestMatchers("/api/notifications/**")
                         .authenticated()
 
+                        // Batches
+                        .requestMatchers(HttpMethod.GET, "/api/batches/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers("/api/batches/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        // Exams
+                        .requestMatchers(HttpMethod.GET, "/api/exams/student/available")
+                        .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/exams/*/submit")
+                        .hasRole("STUDENT")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/exams/*/publish", "/api/exams/*/unpublish")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/exams/*/analytics", "/api/exams/*/results")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/exams")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/exams/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/exams/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/exams", "/api/exams/**")
+                        .authenticated()
+
                         // Admin
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
@@ -145,6 +177,38 @@ public class SecurityConfig {
                         .hasRole("STUDENT")
 
                         .requestMatchers(HttpMethod.GET, "/api/feedback/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        // Recordings
+                        .requestMatchers(HttpMethod.POST, "/api/recordings")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/recordings/analytics/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/recordings/*/analytics")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/recordings/*")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/recordings/*/status")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/recordings/*/permanent")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/recordings/*")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers("/api/recordings/**")
+                        .authenticated()
+
+                        // Courses
+                        .requestMatchers(HttpMethod.GET, "/api/courses/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers("/api/courses/**")
                         .hasAnyRole("TEACHER", "ADMIN")
 
                         .anyRequest().authenticated()

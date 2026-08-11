@@ -39,6 +39,9 @@ public class Notification {
     @Indexed
     private String batchId; // set when recipientType == BATCH
 
+    @Indexed
+    private String sessionId; // set when recipientType == LIVE_CLASSROOM
+
     private NotificationPriority priority;
 
     @Builder.Default

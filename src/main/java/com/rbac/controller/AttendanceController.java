@@ -1,7 +1,7 @@
 package com.rbac.controller;
 
-import com.rbac.dto.MarkAttendanceRequest;
-import com.rbac.dto.UpdateAttendanceRequest;
+import com.rbac.dto.attendance.MarkAttendanceRequest;
+import com.rbac.dto.attendance.UpdateAttendanceRequest;
 import com.rbac.model.attendance.Attendance;
 import com.rbac.service.AttendanceService;
 import jakarta.validation.Valid;
@@ -38,5 +38,10 @@ public class AttendanceController {
     @PutMapping("/update")
     public ResponseEntity<Attendance> update(@Valid @RequestBody UpdateAttendanceRequest request) {
         return ResponseEntity.ok(attendanceService.updateAttendance(request));
+    }
+
+    @GetMapping("/session/{sessionId}/summary")
+    public ResponseEntity<java.util.Map<String, Object>> getSummary(@PathVariable String sessionId) {
+        return ResponseEntity.ok(attendanceService.getSummaryBySession(sessionId));
     }
 }

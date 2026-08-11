@@ -67,4 +67,14 @@ public class SessionController {
     public ResponseEntity<List<SessionResponse>> getAllSessions() {
         return ResponseEntity.ok(sessionService.getAllSessions());
     }
+
+    @GetMapping("/live")
+    public ResponseEntity<List<SessionResponse>> getLiveSessions() {
+        return ResponseEntity.ok(sessionService.getLiveSessions());
+    }
+
+    @GetMapping("/{sessionId}/statistics")
+    public ResponseEntity<SessionResponse.SessionStatisticsResponse> getStatistics(@PathVariable String sessionId) {
+        return ResponseEntity.ok(sessionService.getStatistics(sessionId));
+    }
 }

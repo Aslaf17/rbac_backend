@@ -6,5 +6,6 @@ public enum ParticipantStatus {
     REMOVED,
     REJECTED,
     DISCONNECTED,
+    RECONNECTING,
     LEFT
 }

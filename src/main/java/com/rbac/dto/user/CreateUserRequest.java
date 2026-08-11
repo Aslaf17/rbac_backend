@@ -1,4 +1,4 @@
-package com.rbac.dto;
+package com.rbac.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class RegisterRequest {
+public class CreateUserRequest {
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 30, message = "Username must be between 3 and 30 characters")
@@ -21,5 +21,14 @@ public class RegisterRequest {
     private String password;
 
     @NotBlank(message = "Role is required")
-    private String role; // STUDENT | TEACHER | EMPLOYER | EMPLOYEE | ADMIN
+    private String role;
+
+    private boolean active = true;
+
+    private String displayName;
+    private String department;
+    private String designation;
+    private String studentId;
+    private String trainerId;
+    private String employeeId;
 }

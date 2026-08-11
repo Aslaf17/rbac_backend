@@ -29,6 +29,8 @@ public class CreateNotificationRequest {
 
     private String batchId; // required when recipientType == BATCH
 
+    private String sessionId; // required when recipientType == LIVE_CLASSROOM
+
     @NotNull(message = "priority is required")
     private NotificationPriority priority;
 }

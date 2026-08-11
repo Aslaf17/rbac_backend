@@ -1,8 +1,8 @@
 package com.rbac.service;
 
-import com.rbac.dto.AuthResponse;
-import com.rbac.dto.LoginRequest;
-import com.rbac.dto.RegisterRequest;
+import com.rbac.dto.login.AuthResponse;
+import com.rbac.dto.login.LoginRequest;
+import com.rbac.dto.login.RegisterRequest;
 import com.rbac.model.login.User;
 import com.rbac.model.login.Role;
 import com.rbac.repository.UserRepository;
@@ -48,7 +48,7 @@ public class AuthService {
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
-        return new AuthResponse(token, user.getUsername(), user.getEmail(), user.getRole().name());
+        return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name(), user.getBatchIds());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -63,6 +63,6 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name());
-        return new AuthResponse(token, user.getUsername(), user.getEmail(), user.getRole().name());
+        return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name(), user.getBatchIds());
     }
 }

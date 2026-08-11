@@ -1,8 +1,8 @@
 package com.rbac.controller;
 
-import com.rbac.dto.AuthResponse;
-import com.rbac.dto.LoginRequest;
-import com.rbac.dto.RegisterRequest;
+import com.rbac.dto.login.AuthResponse;
+import com.rbac.dto.login.LoginRequest;
+import com.rbac.dto.login.RegisterRequest;
 import com.rbac.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
