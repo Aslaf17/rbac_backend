@@ -24,8 +24,13 @@ public class BatchResponse {
     private Instant createdAt;
     private Instant updatedAt;
     private long studentCount;
+    private long trainerCount;
 
     public static BatchResponse fromEntity(Batch batch, long studentCount) {
+        return fromEntity(batch, studentCount, 0);
+    }
+
+    public static BatchResponse fromEntity(Batch batch, long studentCount, long trainerCount) {
         return BatchResponse.builder()
                 .batchId(batch.getId())
                 .name(batch.getName())
@@ -36,6 +41,7 @@ public class BatchResponse {
                 .createdAt(batch.getCreatedAt())
                 .updatedAt(batch.getUpdatedAt())
                 .studentCount(studentCount)
+                .trainerCount(trainerCount)
                 .build();
     }
 }

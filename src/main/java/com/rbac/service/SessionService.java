@@ -15,6 +15,7 @@ import com.rbac.model.session.Session;
 import com.rbac.model.session.SessionStatus;
 import com.rbac.repository.AttendanceRepository;
 import com.rbac.repository.BatchRepository;
+import com.rbac.repository.ParticipantRepository;
 import com.rbac.repository.SessionRepository;
 import com.rbac.security.chat.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,10 @@ public interface SessionService {
     SessionResponse unlockSession(String sessionId, AuthenticatedUser requester);
 
     List<SessionResponse> getAllSessions();
+
+    List<SessionResponse> getLiveSessions();
+
+    SessionResponse.SessionStatisticsResponse getStatistics(String sessionId);
 }
 
 @Slf4j
@@ -55,8 +60,8 @@ class SessionServiceImpl implements SessionService {
     private final com.rbac.service.classroom.EmailNotificationService emailNotificationService;
     private final com.rbac.service.classroom.ActivityLogService activityLogService;
     private final com.rbac.service.classroom.ClassroomNotificationService notificationService;
+    private final ParticipantRepository participantRepository;
 
-    // REPLACE the existing startSession method body with:
     @Override
     public SessionResponse startSession(StartSessionRequest request, AuthenticatedUser trainer) {
         Batch batch = batchRepository.findById(request.getBatchId())
@@ -66,6 +71,15 @@ class SessionServiceImpl implements SessionService {
         }
 
         Session session = new Session();
+
+        // Optional caller-supplied session ID; falls back to Mongo's auto-generated ID.
+        if (request.getSessionId() != null && !request.getSessionId().isBlank()) {
+            if (sessionRepository.existsById(request.getSessionId().trim())) {
+                throw new InvalidRequestException("Session ID already in use: " + request.getSessionId());
+            }
+            session.setId(request.getSessionId().trim());
+        }
+
         session.setTitle(request.getTitle());
         session.setTrainerId(trainer.getUserId());
         session.setTrainerName(trainer.getUserName());
@@ -77,6 +91,12 @@ class SessionServiceImpl implements SessionService {
         if (request.getReconnectTimeoutSeconds() != null && request.getReconnectTimeoutSeconds() > 0) {
             session.setReconnectTimeoutSeconds(request.getReconnectTimeoutSeconds());
         }
+        if (request.getScheduledAt() != null) {
+            session.setScheduledAt(request.getScheduledAt());
+        }
+        if (request.getNumberOfDays() != null && request.getNumberOfDays() > 0) {
+            session.setNumberOfDays(request.getNumberOfDays());
+        }
 
         Session saved = sessionRepository.save(session);
         log.info("Session {} started by {}", saved.getId(), trainer.getUserId());
@@ -85,7 +105,6 @@ class SessionServiceImpl implements SessionService {
                 com.rbac.model.classroom.ActivityType.SESSION_STARTED, "Session started");
         notificationService.broadcast(saved.getId(), "SESSION_STARTED", SessionResponse.fromEntity(saved));
 
-        // Email only the students belonging to this session's batch — not every student.
         java.util.List<com.rbac.model.login.User> students =
                 userRepository.findByBatchIdsContaining(saved.getBatchId());
         emailNotificationService.notifySessionStarted(saved, students);
@@ -132,8 +151,6 @@ class SessionServiceImpl implements SessionService {
             throw new UnauthorizedActionException("Trainer cannot join their own session as an attendee");
         }
 
-        // Batch-wise classroom access: students may only join classrooms for their own batch.
-        // Trainers/Admins are exempt so they can oversee or co-host any classroom.
         if (user.hasRole(com.rbac.model.login.Role.STUDENT) && !user.isTrainerOrAdmin()) {
             User student = userRepository.findById(user.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + user.getUserId()));
@@ -184,7 +201,6 @@ class SessionServiceImpl implements SessionService {
         return response;
     }
 
-    // ADD inside SessionServiceImpl:
     @Override
     public SessionResponse lockSession(String sessionId, AuthenticatedUser requester) {
         Session session = sessionRepository.findById(sessionId)
@@ -230,7 +246,65 @@ class SessionServiceImpl implements SessionService {
     @Override
     public List<SessionResponse> getAllSessions() {
         return sessionRepository.findAll().stream()
-                .map(SessionResponse::fromEntity)
+                .map(this::enrich)
                 .toList();
+    }
+
+    @Override
+    public List<SessionResponse> getLiveSessions() {
+        return sessionRepository.findByStatus(SessionStatus.LIVE).stream()
+                .map(this::enrich)
+                .toList();
+    }
+
+    private SessionResponse enrich(Session session) {
+        String batchName = session.getBatchId() == null ? null :
+                batchRepository.findById(session.getBatchId())
+                        .map(Batch::getName)
+                        .orElse(null);
+        long activeCount = participantRepository
+                .countBySessionIdAndStatus(session.getId(), com.rbac.model.classroom.ParticipantStatus.ACTIVE);
+        return SessionResponse.fromEntity(session, batchName, activeCount);
+    }
+
+    @Override
+    public SessionResponse.SessionStatisticsResponse getStatistics(String sessionId) {
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found: " + sessionId));
+
+        long duration = session.getStartedAt() == null ? 0 :
+                java.time.Duration.between(session.getStartedAt(),
+                        session.getEndedAt() != null ? session.getEndedAt() : Instant.now()
+                ).getSeconds();
+
+        List<Attendance> attendance =
+                attendanceRepository.findBySessionId(sessionId);
+
+        long present = attendance.stream()
+                .filter(a -> a.getStatus() == AttendanceStatus.PRESENT)
+                .count();
+
+        long absent = attendance.stream()
+                .filter(a -> a.getStatus() == AttendanceStatus.ABSENT)
+                .count();
+
+        long late = attendance.stream()
+                .filter(a -> a.getStatus() == AttendanceStatus.LATE)
+                .count();
+
+        long active = participantRepository.countBySessionIdAndStatus(
+                sessionId,
+                com.rbac.model.classroom.ParticipantStatus.ACTIVE
+        );
+
+        return SessionResponse.SessionStatisticsResponse.builder()
+                .sessionId(sessionId)
+                .durationSeconds(Math.max(duration, 0))
+                .totalParticipants(attendance.size())
+                .activeParticipants(active)
+                .presentCount(present)
+                .absentCount(absent)
+                .lateCount(late)
+                .build();
     }
 }

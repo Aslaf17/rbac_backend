@@ -84,4 +84,22 @@ public class AttendanceService {
         long seconds = Duration.between(joinTime, leaveTime).getSeconds();
         return Math.max(seconds, 0L);
     }
+
+    public java.util.Map<String, Object> getSummaryBySession(String sessionId) {
+        List<Attendance> records = attendanceRepository.findBySessionId(sessionId);
+        long present = records.stream().filter(a -> a.getStatus() == AttendanceStatus.PRESENT).count();
+        long absent = records.stream().filter(a -> a.getStatus() == AttendanceStatus.ABSENT).count();
+        long late = records.stream().filter(a -> a.getStatus() == AttendanceStatus.LATE).count();
+        long leftEarly = records.stream().filter(a -> a.getStatus() == AttendanceStatus.LEFT_EARLY).count();
+
+        return java.util.Map.of(
+                "sessionId", sessionId,
+                "totalMarked", records.size(),
+                "present", present,
+                "absent", absent,
+                "late", late,
+                "leftEarly", leftEarly,
+                "records", records
+        );
+    }
 }

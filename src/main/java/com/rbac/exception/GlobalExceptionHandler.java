@@ -136,4 +136,40 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleBatchDuplicate(com.rbac.exception.batch.DuplicateBatchException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiError(409, ex.getMessage()));
     }
+
+    @ExceptionHandler(com.rbac.exception.course.ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleCourseNotFound(com.rbac.exception.course.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.course.InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleCourseInvalidRequest(com.rbac.exception.course.InvalidRequestException ex) {
+        return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.course.UnauthorizedActionException.class)
+    public ResponseEntity<ApiError> handleCourseUnauthorized(com.rbac.exception.course.UnauthorizedActionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.course.DuplicateCourseException.class)
+    public ResponseEntity<ApiError> handleCourseDuplicate(com.rbac.exception.course.DuplicateCourseException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiError(409, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.exam.ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleExamNotFound(com.rbac.exception.exam.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.exam.InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleExamInvalidRequest(com.rbac.exception.exam.InvalidRequestException ex) {
+        return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.exam.UnauthorizedActionException.class)
+    public ResponseEntity<ApiError> handleExamUnauthorized(com.rbac.exception.exam.UnauthorizedActionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
+    }
+
 }

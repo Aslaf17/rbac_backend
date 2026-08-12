@@ -16,7 +16,7 @@ import java.time.Instant;
 public class Batch {
 
     @Id
-    private String id; // the batch code itself, e.g. "CSE-2026-001"
+    private String id;
 
     @Indexed
     private String name;

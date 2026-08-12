@@ -30,9 +30,20 @@ public class User {
 
     private Role role;
 
+    private boolean active = true;
+
     private Instant createdAt = Instant.now();
+
+    private Instant updatedAt;
 
     @Indexed
     private Set<String> batchIds = new HashSet<>();
+
+    private String displayName;
+    private String department;
+    private String designation;
+    private String studentId;
+    private String trainerId;
+    private String employeeId;
 
 }

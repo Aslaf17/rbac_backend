@@ -41,4 +41,9 @@ public class Session {
     private Instant trainerDisconnectedAt;
 
     private int reconnectTimeoutSeconds = 300;
+
+    private Instant scheduledAt;
+
+    private int numberOfDays = 1;
+
 }

@@ -143,6 +143,31 @@ public class SecurityConfig {
                         .requestMatchers("/api/batches/**")
                         .hasAnyRole("TEACHER", "ADMIN")
 
+                        // Exams
+                        .requestMatchers(HttpMethod.GET, "/api/exams/student/available")
+                        .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/exams/*/submit")
+                        .hasRole("STUDENT")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/exams/*/publish", "/api/exams/*/unpublish")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/exams/*/analytics", "/api/exams/*/results")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/exams")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/exams/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/exams/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/exams", "/api/exams/**")
+                        .authenticated()
+
                         // Admin
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
@@ -178,6 +203,15 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/recordings/**")
                         .authenticated()
+
+
+                        // Courses
+                        .requestMatchers(HttpMethod.GET, "/api/courses/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers("/api/courses/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
 
                         .anyRequest().authenticated()
                 )

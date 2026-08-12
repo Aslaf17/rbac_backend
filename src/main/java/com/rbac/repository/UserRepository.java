@@ -24,4 +24,11 @@ public interface UserRepository extends MongoRepository<User, String> {
     long countByBatchIdsContaining(String batchId);
 
     java.util.List<com.rbac.model.login.User> findByIdInAndRole(java.util.List<String> ids, Role role);
+
+    boolean existsByEmailAndIdNot(String email, String id);
+
+    java.util.List<com.rbac.model.login.User> findByBatchIdsContainingAndRole(String batchId, Role role);
+
+    long countByBatchIdsContainingAndRole(String batchId, Role role);
+
 }

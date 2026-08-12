@@ -17,4 +17,9 @@ public class StartSessionRequest {
     private String sessionId;
 
     private Integer reconnectTimeoutSeconds;
+
+    private java.time.Instant scheduledAt;
+
+    private Integer numberOfDays;
+
 }
