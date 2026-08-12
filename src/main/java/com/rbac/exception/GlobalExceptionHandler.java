@@ -171,4 +171,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleExamUnauthorized(com.rbac.exception.exam.UnauthorizedActionException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
     }
+
 }

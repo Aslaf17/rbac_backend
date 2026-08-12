@@ -45,4 +45,5 @@ public class Session {
     private Instant scheduledAt;
 
     private int numberOfDays = 1;
+
 }

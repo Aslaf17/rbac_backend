@@ -204,12 +204,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/recordings/**")
                         .authenticated()
 
+
                         // Courses
                         .requestMatchers(HttpMethod.GET, "/api/courses/**")
                         .hasAnyRole("TEACHER", "ADMIN")
 
                         .requestMatchers("/api/courses/**")
                         .hasAnyRole("TEACHER", "ADMIN")
+
 
                         .anyRequest().authenticated()
                 )

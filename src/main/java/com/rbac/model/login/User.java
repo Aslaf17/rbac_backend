@@ -39,7 +39,6 @@ public class User {
     @Indexed
     private Set<String> batchIds = new HashSet<>();
 
-    // Optional profile fields — set via self-service or admin profile updates
     private String displayName;
     private String department;
     private String designation;

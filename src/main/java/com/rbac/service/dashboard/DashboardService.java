@@ -56,10 +56,6 @@ class DashboardServiceImpl implements DashboardService {
                 .build();
     }
 
-    /**
-     * Groups a collection by the given field and returns counts per distinct
-     * value, e.g. {"STUDENT": 42, "TEACHER": 5, "ADMIN": 1}.
-     */
     private <T> Map<String, Long> countByField(Class<T> collectionClass, String field) {
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.group(field).count().as("count")
@@ -111,3 +107,4 @@ class DashboardServiceImpl implements DashboardService {
         return 0L;
     }
 }
+

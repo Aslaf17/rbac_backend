@@ -21,4 +21,5 @@ public class StartSessionRequest {
     private java.time.Instant scheduledAt;
 
     private Integer numberOfDays;
+
 }

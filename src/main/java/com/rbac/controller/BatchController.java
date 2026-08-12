@@ -54,6 +54,7 @@ public class BatchController {
         return ResponseEntity.ok(batchService.searchTrainers(query, excludeBatchId));
     }
 
+
     @GetMapping("/{batchId}")
     public ResponseEntity<BatchResponse> getBatch(@PathVariable String batchId) {
         return ResponseEntity.ok(batchService.getBatch(batchId));
@@ -116,3 +117,4 @@ public class BatchController {
         return ResponseEntity.ok(batchService.getBatchAnalytics(batchId));
     }
 }
+
