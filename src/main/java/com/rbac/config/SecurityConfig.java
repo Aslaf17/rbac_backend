@@ -212,6 +212,56 @@ public class SecurityConfig {
                         .requestMatchers("/api/courses/**")
                         .hasAnyRole("TEACHER", "ADMIN")
 
+                        // Assignments
+                        .requestMatchers(HttpMethod.GET, "/api/assignments/student/available")
+                        .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/assignments/*/submit")
+                        .hasRole("STUDENT")
+
+                        .requestMatchers(HttpMethod.GET, "/api/assignments/*/my-submission")
+                        .hasAnyRole("STUDENT", "TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/assignments/*/publish", "/api/assignments/*/unpublish", "/api/assignments/*/close")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/assignments/*/submissions/*/grade")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/assignments/*/submissions", "/api/assignments/*/analytics")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/assignments")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/assignments/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/assignments/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/assignments", "/api/assignments/**")
+                        .authenticated()
+
+                        // Certificates
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/verify")
+                        .permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/certificates")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/certificates/*/revoke")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/*/download")
+                        .authenticated()
+
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/**")
+                        .authenticated()
+
+                        .requestMatchers("/api/certificates/**")
+                        .hasAnyRole("TEACHER", "ADMIN")
+
 
                         .anyRequest().authenticated()
                 )
@@ -269,7 +319,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(allowedOrigin));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
