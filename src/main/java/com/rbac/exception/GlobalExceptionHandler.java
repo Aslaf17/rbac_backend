@@ -172,4 +172,35 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
     }
 
+    @ExceptionHandler(com.rbac.exception.assignment.ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleAssignmentNotFound(com.rbac.exception.assignment.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.assignment.InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleAssignmentInvalidRequest(com.rbac.exception.assignment.InvalidRequestException ex) {
+        return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.assignment.UnauthorizedActionException.class)
+    public ResponseEntity<ApiError> handleAssignmentUnauthorized(com.rbac.exception.assignment.UnauthorizedActionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.certificate.ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleCertificateNotFound(com.rbac.exception.certificate.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.certificate.InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleCertificateInvalidRequest(com.rbac.exception.certificate.InvalidRequestException ex) {
+        return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
+    }
+
+    @ExceptionHandler(com.rbac.exception.certificate.UnauthorizedActionException.class)
+    public ResponseEntity<ApiError> handleCertificateUnauthorized(com.rbac.exception.certificate.UnauthorizedActionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
+    }
+
+
 }

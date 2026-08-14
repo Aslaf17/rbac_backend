@@ -4,6 +4,12 @@ import com.rbac.dto.dashboard.AdminDashboardResponse;
 import com.rbac.model.batch.Batch;
 import com.rbac.model.login.User;
 import com.rbac.model.session.Session;
+import com.rbac.model.assignment.AssignmentSubmission;
+import com.rbac.model.assignment.SubmissionStatus;
+import com.rbac.model.certificate.Certificate;
+import com.rbac.model.course.Course;
+import com.rbac.model.exam.Exam;
+import org.springframework.data.mongodb.core.query.Criteria;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
@@ -89,22 +95,29 @@ class DashboardServiceImpl implements DashboardService {
                 .collect(Collectors.toList());
     }
 
-    // --- Placeholders until the corresponding modules/collections exist ---
+    // --- Live counts pulled straight from Mongo ---
 
     private long totalCourses() {
-        return 0L;
+        return mongoTemplate.count(new Query(), Course.class);
     }
 
     private long totalExams() {
-        return 0L;
+        return mongoTemplate.count(new Query(), Exam.class);
     }
 
     private long totalCertificates() {
-        return 0L;
+        return mongoTemplate.count(new Query(), Certificate.class);
     }
 
     private long pendingAssignments() {
-        return 0L;
+        // "Pending" = student has submitted but it hasn't been graded yet
+        Query query = new Query(
+                Criteria.where("status").in(
+                        SubmissionStatus.SUBMITTED,
+                        SubmissionStatus.PENDING_EVALUATION
+                )
+        );
+        return mongoTemplate.count(query, AssignmentSubmission.class);
     }
 }
 
